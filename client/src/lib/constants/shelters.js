@@ -4,7 +4,6 @@ export const ShelterType = {
   ANIMAL: 'animal',
 }
 
-// Sample shelter data (to be replaced with API data later)
 export const shelters = [
   {
     id: '1',
@@ -16,6 +15,7 @@ export const shelters = [
       lng: 80.2707,
     },
     phone: '(044) 123-4567',
+    email: 'info@chennaifoodbank.org',
     website: 'https://chennaifoodbank.org',
     hours: 'Mon-Fri: 9am-5pm',
     description: 'Providing food assistance to those in need. We accept donations and distribute food packages daily.',
@@ -30,6 +30,7 @@ export const shelters = [
       lng: 80.2341,
     },
     phone: '(044) 234-5678',
+    email: 'contact@hopeshelter.org',
     hours: '24/7',
     description: 'Emergency shelter providing beds, meals, and support services.',
   },
@@ -43,6 +44,7 @@ export const shelters = [
       lng: 80.2180,
     },
     phone: '(044) 345-6789',
+    email: 'help@bluecross.org',
     website: 'https://bluecross.org',
     hours: 'Tue-Sun: 10am-6pm',
     description: 'Animal shelter offering adoption services and veterinary care.',
@@ -57,6 +59,7 @@ export const shelters = [
       lng: 80.2565,
     },
     phone: '(044) 456-7890',
+    email: 'support@chennaifoodpantry.org',
     hours: 'Mon-Sat: 8am-8pm',
     description: 'Food pantry serving fresh and non-perishable items to families in need.',
   },
@@ -70,6 +73,7 @@ export const shelters = [
       lng: 80.2676,
     },
     phone: '(044) 567-8901',
+    email: 'info@safehaven.org',
     website: 'https://safehaven.org',
     hours: '24/7',
     description: 'Transitional housing and support services for individuals experiencing homelessness.',
@@ -84,6 +88,7 @@ export const shelters = [
       lng: 80.2668,
     },
     phone: '(044) 678-9012',
+    email: 'contact@petsanctuary.org',
     website: 'https://petsanctuary.org',
     hours: 'Wed-Mon: 11am-7pm',
     description: 'Animal shelter specializing in cat and dog adoption, fostering, and rehabilitation.',

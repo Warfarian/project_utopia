@@ -113,8 +113,8 @@ Description: ${description}
 
 This pin was created through Project Utopia.`
 
-        // Open email client
-        const mailtoLink = `mailto:${nearestShelter.email || 'contact@example.com'}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+        // Open email client with shelter's email (or fallback if not found)
+        const mailtoLink = `mailto:${nearestShelter.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
         window.location.href = mailtoLink
       }
     } catch (err) {
