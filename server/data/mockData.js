@@ -81,6 +81,17 @@ const data = {
       },
       "createdBy": "1",
       "timestamp": "2025-04-26T15:04:22.506Z"
+    },
+    {
+      "id": "1745692806737",
+      "type": "animal",
+      "description": "Cats spotted",
+      "position": {
+        "lat": 13.11055833724456,
+        "lng": 80.20615416295183
+      },
+      "createdBy": "1",
+      "timestamp": "2025-04-26T18:40:06.737Z"
     }
   ],
   "shelters": [
