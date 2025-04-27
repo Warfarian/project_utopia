@@ -18,8 +18,48 @@ router.get("/:id", requireAuth, async (req, res) => {
       console.log(`[GET] /api/users/${req.params.id} - User not found`);
       return res.status(404).json({ error: "User not found" });
     }
+
+    // Add demo reward if it doesn't exist
+    const demoReward = {
+      id: 'demo-reward-1',
+      name: 'Community Champion Award',
+      description: 'Special recognition for outstanding contributions to the community through volunteering and creating helpful pins.',
+      points: 500,
+      status: 'available'
+    };
+
+    // Add demo badge if it doesn't exist
+    const demoBadge = {
+      id: 'demo-badge-1',
+      name: 'First Steps',
+      description: 'Started your journey of helping the community by creating your first pin!',
+      icon: '🌟',
+      earnedAt: new Date()
+    };
+
+    const userData = user.toObject();
+    
+    // Add demo reward if not present
+    if (!userData.rewards.some(r => r.id === demoReward.id)) {
+      userData.rewards.push(demoReward);
+    }
+
+    // Add demo badge if not present
+    if (!userData.badges.some(b => b.id === demoBadge.id)) {
+      userData.badges.push(demoBadge);
+    }
+
+    // Initialize stats if they don't exist
+    if (!userData.stats) {
+      userData.stats = {
+        pinsCreated: 0,
+        volunteeredHours: 0,
+        rewardsEarned: 0
+      };
+    }
+
     console.log(`[GET] /api/users/${req.params.id} - User profile fetched`);
-    res.json(user);
+    res.json(userData);
   } catch (error) {
     console.error(`[GET] /api/users/${req.params.id} - Error:`, error.message);
     res.status(500).json({ error: error.message });

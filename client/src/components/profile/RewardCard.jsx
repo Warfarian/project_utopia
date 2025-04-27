@@ -25,7 +25,7 @@ export default function RewardCard({ reward, onRedeem }) {
           </Button>
         ) : (
           <div className="text-sm text-muted-foreground">
-            Redeemed on {reward.redeemedAt.toLocaleDateString()}
+            Redeemed on {new Date(reward.redeemedAt).toLocaleDateString()}
           </div>
         )}
       </div>

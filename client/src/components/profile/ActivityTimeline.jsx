@@ -14,7 +14,7 @@ export default function ActivityTimeline({ activities }) {
             <div className="flex items-center justify-between">
               <p className="font-medium">{activity.organization}</p>
               <p className="text-sm text-muted-foreground">
-                {activity.date.toLocaleDateString()}
+                {new Date(activity.date).toLocaleDateString()}
               </p>
             </div>
             <p className="text-sm text-muted-foreground">{activity.description}</p>

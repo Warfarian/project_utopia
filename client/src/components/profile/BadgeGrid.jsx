@@ -12,7 +12,7 @@ export default function BadgeGrid({ badges }) {
             {badge.description}
           </p>
           <p className="text-xs text-muted-foreground mt-2">
-            Earned {badge.earnedAt.toLocaleDateString()}
+            Earned {new Date(badge.earnedAt).toLocaleDateString()}
           </p>
         </div>
       ))}

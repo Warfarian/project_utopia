@@ -10,10 +10,43 @@ const authRouter = require("./routes/authRouter");
 
 const app = express();
 const mongoose = require("mongoose");
+
+console.log("Attempting to connect to MongoDB...");
+
+// Set mongoose connection options
+mongoose.set('bufferCommands', false); // Disable mongoose buffering
+mongoose.set('bufferTimeoutMS', 10000); // Set buffer timeout to 10 seconds
+
 mongoose
-  .connect("mongodb://127.0.0.1:27017/DevPost", {})
-  .then(() => console.log("Connected to MongoDB"))
-  .catch((err) => console.error("MongoDB connection error:", err));
+  .connect("mongodb://192.168.1.12:27017/DevPost", {
+    serverSelectionTimeoutMS: 5000, // Reduce the server selection timeout
+  })
+  .then(() => {
+    console.log("Successfully connected to MongoDB");
+  })
+  .catch((err) => {
+    console.error("MongoDB connection error:", err);
+    console.error("Error details:", {
+      name: err.name,
+      message: err.message,
+      code: err.code,
+      codeName: err.codeName,
+    });
+    process.exit(1); // Exit the process on connection failure
+  });
+
+// Add connection event listeners
+mongoose.connection.on('error', err => {
+  console.error('Mongoose connection error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('Mongoose disconnected');
+});
+
+mongoose.connection.on('connected', () => {
+  console.log('Mongoose connected');
+});
 
 // Logging middleware
 app.use((req, res, next) => {

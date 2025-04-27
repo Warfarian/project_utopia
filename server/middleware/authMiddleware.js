@@ -9,7 +9,7 @@ const requireAuth = async (req, res, next) => {
 
     const decoded = jwt.verify(
       token,
-      process.env.JWT_SECRET || "your_jwt_secret"
+      process.env.JWT_SECRET || "Vhagar_Arsh_FemBoi"
     );
     req.user = decoded; // Attach user info to request
     next();

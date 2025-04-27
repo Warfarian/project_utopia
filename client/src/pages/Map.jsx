@@ -5,6 +5,7 @@ import { PinType, pinIcons } from '@/lib/constants'
 import LocationDetector from '@/components/LocationDetector'
 import { calculateDistance } from '@/lib/utils/haversine'
 import { shelters } from '@/lib/constants/shelters'
+import { useAuth } from '@/context/AuthContext'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
 
@@ -24,6 +25,7 @@ function MapEvents({ onMapClick }) {
 }
 
 export default function Map() {
+  const { user: authUser } = useAuth()
   const [pins, setPins] = useState([])
   const [dialogOpen, setDialogOpen] = useState(false)
   const [selectedPosition, setSelectedPosition] = useState(null)
@@ -35,8 +37,21 @@ export default function Map() {
   useEffect(() => {
     const fetchPins = async () => {
       try {
-        const response = await fetch('/api/pins')
-        if (!response.ok) throw new Error('Failed to fetch pins')
+        const token = localStorage.getItem('token')
+        if (!token) {
+          throw new Error('No authentication token found')
+        }
+
+        const response = await fetch('/api/pins', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch pins')
+        }
+
         const data = await response.json()
         setPins(data)
       } catch (err) {
@@ -67,7 +82,7 @@ export default function Map() {
   }
 
   const handleAddPin = async ({ type, description }) => {
-    if (!selectedPosition) return
+    if (!selectedPosition || !authUser) return
 
     const newPin = {
       type,
@@ -76,15 +91,21 @@ export default function Map() {
         lat: selectedPosition.lat,
         lng: selectedPosition.lng
       },
-      createdBy: '1', // Hardcoded user ID for now
+      createdBy: authUser.id,
       timestamp: new Date()
     }
 
     try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        throw new Error('No authentication token found')
+      }
+
       const response = await fetch('/api/pins', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(newPin),
       })
@@ -113,9 +134,13 @@ Description: ${description}
 
 This pin was created through Project Utopia.`
 
-        // Open email client with shelter's email (or fallback if not found)
-        const mailtoLink = `mailto:${nearestShelter.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
-        window.location.href = mailtoLink
+        // Open Gmail compose window
+        const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1` +
+          `&to=${encodeURIComponent(nearestShelter.email)}` +
+          `&su=${encodeURIComponent(subject)}` +
+          `&body=${encodeURIComponent(body)}`
+        
+        window.open(gmailUrl, '_blank')
       }
     } catch (err) {
       setError(err.message)

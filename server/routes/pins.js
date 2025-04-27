@@ -4,6 +4,7 @@ const Pin = require("../models/Pin");
 const User = require("../models/User");
 
 const requireAuth = require("../middleware/authMiddleware");
+
 // Get all pins
 router.get("/", requireAuth, async (req, res) => {
   try {
@@ -15,7 +16,9 @@ router.get("/", requireAuth, async (req, res) => {
         const user = await User.findOne({ id: pin.createdBy }, "id name");
         return {
           ...pin.toObject(),
-          createdBy: { id: user.id, name: user.name },
+          createdBy: user 
+            ? { id: user.id, name: user.name }
+            : { id: pin.createdBy, name: 'Unknown User' }
         };
       })
     );
@@ -37,6 +40,13 @@ router.post("/", requireAuth, async (req, res) => {
       timestamp: new Date(),
     });
     await pin.save();
+
+    // Increment the user's pinsCreated count
+    await User.findOneAndUpdate(
+      { id: pin.createdBy },
+      { $inc: { 'stats.pinsCreated': 1 } }
+    );
+
     console.log("[POST] /api/pins - Created pin:", pin.id);
     res.status(201).json(pin);
   } catch (error) {
@@ -55,15 +65,14 @@ router.get("/:id", requireAuth, async (req, res) => {
       return res.status(404).json({ error: "Pin not found" });
     }
     const user = await User.findOne({ id: pin.createdBy }, "id name");
-    if (!user) {
-      console.log(`[GET] /api/pins/${req.params.id} - User not found for pin`);
-      return res.status(404).json({ error: "User not found for pin" });
-    }
-    console.log(`[GET] /api/pins/${req.params.id} - Found pin`);
-    res.json({
+    const pinWithUser = {
       ...pin.toObject(),
-      createdBy: { id: user.id, name: user.name },
-    });
+      createdBy: user 
+        ? { id: user.id, name: user.name }
+        : { id: pin.createdBy, name: 'Unknown User' }
+    };
+    console.log(`[GET] /api/pins/${req.params.id} - Found pin`);
+    res.json(pinWithUser);
   } catch (error) {
     console.error(`[GET] /api/pins/${req.params.id} - Error:`, error.message);
     res.status(500).json({ error: error.message });

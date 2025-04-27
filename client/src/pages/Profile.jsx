@@ -1,5 +1,6 @@
-import { useState } from 'react'
-import { currentUser } from '@/lib/constants/user'
+import { useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
+import { useAuth } from '@/context/AuthContext'
 import UserStats from '@/components/profile/UserStats'
 import BadgeGrid from '@/components/profile/BadgeGrid'
 import ActivityTimeline from '@/components/profile/ActivityTimeline'
@@ -8,61 +9,118 @@ import VolunteerForm from '@/components/profile/VolunteerForm'
 import { Button } from '@/components/ui/button'
 
 export default function Profile() {
-  const [user, setUser] = useState(currentUser)
+  const location = useLocation()
+  const { user: authUser } = useAuth()
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [volunteerFormOpen, setVolunteerFormOpen] = useState(false)
 
-  const handleRedeemReward = (reward) => {
-    // Update the reward status
-    const updatedRewards = user.rewards.map(r => {
-      if (r.id === reward.id) {
-        return {
-          ...r,
-          status: 'redeemed',
-          redeemedAt: new Date()
-        }
+  const fetchUserProfile = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token || !authUser) {
+        throw new Error('Authentication required')
       }
-      return r
-    })
 
-    // Update user stats
-    const updatedStats = {
-      ...user.stats,
-      rewardsEarned: user.stats.rewardsEarned + 1
+      const response = await fetch(`/api/users/${authUser.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch user profile')
+      }
+
+      const data = await response.json()
+      setUser(data)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
     }
-
-    // Update user state
-    setUser({
-      ...user,
-      rewards: updatedRewards,
-      stats: updatedStats
-    })
   }
 
-  const handleAddVolunteerActivity = (activity) => {
-    // Create new activity with ID
-    const newActivity = {
-      id: Date.now().toString(),
-      ...activity
+  useEffect(() => {
+    fetchUserProfile()
+  }, [location])
+
+  const handleRedeemReward = async (reward) => {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        throw new Error('Authentication required')
+      }
+
+      const response = await fetch(`/api/users/${user.id}/rewards/${reward.id}/redeem`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to redeem reward')
+      }
+
+      const updatedUser = await response.json()
+      setUser(updatedUser)
+    } catch (err) {
+      setError(err.message)
     }
+  }
 
-    // Update volunteer history
-    const updatedHistory = [newActivity, ...user.volunteerHistory]
+  const handleAddVolunteerActivity = async (activity) => {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        throw new Error('Authentication required')
+      }
 
-    // Update user stats
-    const updatedStats = {
-      ...user.stats,
-      volunteeredHours: user.stats.volunteeredHours + activity.hours
+      const response = await fetch(`/api/users/${user.id}/volunteer`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(activity)
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to add volunteer activity')
+      }
+
+      const updatedUser = await response.json()
+      setUser(updatedUser)
+      setVolunteerFormOpen(false)
+    } catch (err) {
+      setError(err.message)
     }
+  }
 
-    // Update user state
-    setUser({
-      ...user,
-      volunteerHistory: updatedHistory,
-      stats: updatedStats
-    })
+  if (loading) {
+    return (
+      <div className="container py-8">
+        <p className="text-muted-foreground">Loading profile...</p>
+      </div>
+    )
+  }
 
-    // Close the form
-    setVolunteerFormOpen(false)
+  if (error) {
+    return (
+      <div className="container py-8">
+        <p className="text-destructive">Error: {error}</p>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div className="container py-8">
+        <p className="text-destructive">User profile not found</p>
+      </div>
+    )
   }
 
   return (
@@ -77,7 +135,7 @@ export default function Profile() {
           </div>
           <div>
             <h1 className="text-2xl font-bold">{user.name}</h1>
-            <p className="text-muted-foreground">Member since {user.joinedAt.toLocaleDateString()}</p>
+            <p className="text-muted-foreground">Member since {new Date(user.joinedAt).toLocaleDateString()}</p>
           </div>
         </div>
 
