@@ -1,103 +1,93 @@
-const express = require('express')
-const router = express.Router()
-const fs = require('fs')
-const path = require('path')
-const data = require('../data/mockData')
+const express = require("express");
+const router = express.Router();
+const Pin = require("../models/Pin");
+const User = require("../models/User");
 
-// Helper function to save data back to mockData.js
-const saveData = () => {
-  const filePath = path.join(__dirname, '../data/mockData.js')
-  const fileContent = `// Mock data store
-const data = ${JSON.stringify(data, null, 2)}
-
-module.exports = data
-`
-  fs.writeFileSync(filePath, fileContent, 'utf8')
-}
-
+const requireAuth = require("../middleware/authMiddleware");
 // Get all pins
-router.get('/', async (req, res) => {
+router.get("/", requireAuth, async (req, res) => {
   try {
-    console.log('[GET] /api/pins - Fetching all pins')
-    // Add user name to each pin
-    const pinsWithUsers = data.pins.map(pin => {
-      const user = data.users.find(u => u.id === pin.createdBy)
-      return {
-        ...pin,
-        createdBy: { id: user.id, name: user.name }
-      }
-    })
-    console.log(`[GET] /api/pins - Found ${pinsWithUsers.length} pins`)
-    res.json(pinsWithUsers)
+    console.log("[GET] /api/pins - Fetching all pins");
+    const pins = await Pin.find();
+    // Fetch user data for each pin
+    const pinsWithUsers = await Promise.all(
+      pins.map(async (pin) => {
+        const user = await User.findOne({ id: pin.createdBy }, "id name");
+        return {
+          ...pin.toObject(),
+          createdBy: { id: user.id, name: user.name },
+        };
+      })
+    );
+    console.log(`[GET] /api/pins - Found ${pinsWithUsers.length} pins`);
+    res.json(pinsWithUsers);
   } catch (error) {
-    console.error('[GET] /api/pins - Error:', error.message)
-    res.status(500).json({ error: error.message })
+    console.error("[GET] /api/pins - Error:", error.message);
+    res.status(500).json({ error: error.message });
   }
-})
+});
 
 // Create new pin
-router.post('/', async (req, res) => {
+router.post("/", requireAuth, async (req, res) => {
   try {
-    console.log('[POST] /api/pins - Creating new pin:', req.body)
-    const pin = {
+    console.log("[POST] /api/pins - Creating new pin:", req.body);
+    const pin = new Pin({
       id: Date.now().toString(),
       ...req.body,
-      timestamp: new Date()
-    }
-    data.pins.push(pin)
-    
-    // Save updated data back to file
-    saveData()
-    
-    console.log('[POST] /api/pins - Created pin:', pin.id)
-    res.status(201).json(pin)
+      timestamp: new Date(),
+    });
+    await pin.save();
+    console.log("[POST] /api/pins - Created pin:", pin.id);
+    res.status(201).json(pin);
   } catch (error) {
-    console.error('[POST] /api/pins - Error:', error.message)
-    res.status(400).json({ error: error.message })
+    console.error("[POST] /api/pins - Error:", error.message);
+    res.status(400).json({ error: error.message });
   }
-})
+});
 
 // Get pin by ID
-router.get('/:id', async (req, res) => {
+router.get("/:id", requireAuth, async (req, res) => {
   try {
-    console.log(`[GET] /api/pins/${req.params.id} - Fetching pin`)
-    const pin = data.pins.find(p => p.id === req.params.id)
+    console.log(`[GET] /api/pins/${req.params.id} - Fetching pin`);
+    const pin = await Pin.findOne({ id: req.params.id });
     if (!pin) {
-      console.log(`[GET] /api/pins/${req.params.id} - Pin not found`)
-      return res.status(404).json({ error: 'Pin not found' })
+      console.log(`[GET] /api/pins/${req.params.id} - Pin not found`);
+      return res.status(404).json({ error: "Pin not found" });
     }
-    const user = data.users.find(u => u.id === pin.createdBy)
-    console.log(`[GET] /api/pins/${req.params.id} - Found pin`)
+    const user = await User.findOne({ id: pin.createdBy }, "id name");
+    if (!user) {
+      console.log(`[GET] /api/pins/${req.params.id} - User not found for pin`);
+      return res.status(404).json({ error: "User not found for pin" });
+    }
+    console.log(`[GET] /api/pins/${req.params.id} - Found pin`);
     res.json({
-      ...pin,
-      createdBy: { id: user.id, name: user.name }
-    })
+      ...pin.toObject(),
+      createdBy: { id: user.id, name: user.name },
+    });
   } catch (error) {
-    console.error(`[GET] /api/pins/${req.params.id} - Error:`, error.message)
-    res.status(500).json({ error: error.message })
+    console.error(`[GET] /api/pins/${req.params.id} - Error:`, error.message);
+    res.status(500).json({ error: error.message });
   }
-})
+});
 
 // Delete pin
-router.delete('/:id', async (req, res) => {
+router.delete("/:id", requireAuth, async (req, res) => {
   try {
-    console.log(`[DELETE] /api/pins/${req.params.id} - Deleting pin`)
-    const index = data.pins.findIndex(p => p.id === req.params.id)
-    if (index === -1) {
-      console.log(`[DELETE] /api/pins/${req.params.id} - Pin not found`)
-      return res.status(404).json({ error: 'Pin not found' })
+    console.log(`[DELETE] /api/pins/${req.params.id} - Deleting pin`);
+    const pin = await Pin.findOneAndDelete({ id: req.params.id });
+    if (!pin) {
+      console.log(`[DELETE] /api/pins/${req.params.id} - Pin not found`);
+      return res.status(404).json({ error: "Pin not found" });
     }
-    data.pins.splice(index, 1)
-    
-    // Save updated data back to file
-    saveData()
-    
-    console.log(`[DELETE] /api/pins/${req.params.id} - Pin deleted`)
-    res.json({ message: 'Pin deleted successfully' })
+    console.log(`[DELETE] /api/pins/${req.params.id} - Pin deleted`);
+    res.json({ message: "Pin deleted successfully" });
   } catch (error) {
-    console.error(`[DELETE] /api/pins/${req.params.id} - Error:`, error.message)
-    res.status(500).json({ error: error.message })
+    console.error(
+      `[DELETE] /api/pins/${req.params.id} - Error:`,
+      error.message
+    );
+    res.status(500).json({ error: error.message });
   }
-})
+});
 
-module.exports = router
+module.exports = router;
