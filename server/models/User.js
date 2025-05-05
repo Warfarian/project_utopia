@@ -14,6 +14,8 @@ const rewardSchema = new mongoose.Schema({
   name: { type: String, required: true },
   description: { type: String, required: true },
   points: { type: Number, required: true },
+  category: { type: String },
+  icon: { type: String },
   status: {
     type: String,
     enum: ["available", "redeemed"],
@@ -35,6 +37,7 @@ const statsSchema = new mongoose.Schema({
   pinsCreated: { type: Number, default: 0 },
   volunteeredHours: { type: Number, default: 0 },
   rewardsEarned: { type: Number, default: 0 },
+  points: { type: Number, default: 500 }, // Added points field with default 500
 });
 
 const userSchema = new mongoose.Schema(

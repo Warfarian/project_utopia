@@ -23,6 +23,9 @@ export default function Navbar() {
           <Link to="/shelters" className="text-sm font-medium hover:text-primary">
             Shelters
           </Link>
+          <Link to="/shop" className="text-sm font-medium hover:text-primary">
+            Shop
+          </Link>
           <Button
             variant="ghost"
             size="icon"
